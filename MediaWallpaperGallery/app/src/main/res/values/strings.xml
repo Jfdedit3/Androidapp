@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Media Wallpaper Gallery</string>
+    <string name="no_media_found">No image or video found.</string>
+    <string name="permission_required">Grant gallery permissions to load your media.</string>
+    <string name="share">Share</string>
+    <string name="set_wallpaper">Set wallpaper</string>
+    <string name="set_image_wallpaper">Set image wallpaper</string>
+    <string name="set_video_wallpaper">Set video wallpaper</string>
+    <string name="wallpaper_image_success">Image wallpaper applied.</string>
+    <string name="wallpaper_video_hint">Select this live wallpaper in the Android wallpaper screen to apply the video.</string>
+    <string name="wallpaper_failed">Unable to apply wallpaper.</string>
+    <string name="video_wallpaper_service_name">Video Wallpaper</string>
+    <string name="video_wallpaper_description">Loop the selected gallery video as live wallpaper.</string>
+    <string name="video">Video</string>
+    <string name="image">Image</string>
+</resources>
