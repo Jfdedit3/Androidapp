@@ -19,6 +19,7 @@ class ViewerActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
     private var currentUri: Uri? = null
     private var currentType: MediaType = MediaType.IMAGE
+    private var playbackPosition: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,24 +39,26 @@ class ViewerActivity : AppCompatActivity() {
         binding.shareButton.setOnClickListener { shareCurrentMedia() }
         binding.wallpaperButton.setOnClickListener { setAsWallpaper() }
 
+        binding.wallpaperButton.visibility = if (currentType == MediaType.IMAGE) View.VISIBLE else View.GONE
+    }
+
+    override fun onStart() {
+        super.onStart()
         currentUri?.let { uri ->
             when (currentType) {
                 MediaType.IMAGE -> showImage(uri)
                 MediaType.VIDEO, MediaType.AUDIO -> showPlayer(uri, currentType == MediaType.AUDIO)
             }
         }
-
-        binding.wallpaperButton.visibility = if (currentType == MediaType.IMAGE) View.VISIBLE else View.GONE
     }
 
     private fun showImage(uri: Uri) {
+        releasePlayer()
         binding.imageView.visibility = View.VISIBLE
         binding.playerView.visibility = View.GONE
         binding.audioHint.visibility = View.GONE
 
-        Glide.with(this)
-            .load(uri)
-            .into(binding.imageView)
+        Glide.with(this).load(uri).into(binding.imageView)
     }
 
     private fun showPlayer(uri: Uri, audioOnly: Boolean) {
@@ -63,12 +66,26 @@ class ViewerActivity : AppCompatActivity() {
         binding.playerView.visibility = View.VISIBLE
         binding.audioHint.visibility = if (audioOnly) View.VISIBLE else View.GONE
 
-        player = ExoPlayer.Builder(this).build().also { exoPlayer ->
-            binding.playerView.player = exoPlayer
-            exoPlayer.setMediaItem(MediaItem.fromUri(uri))
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
+        if (player == null) {
+            player = ExoPlayer.Builder(this).build()
+            binding.playerView.player = player
         }
+
+        player?.apply {
+            setMediaItem(MediaItem.fromUri(uri))
+            prepare()
+            seekTo(playbackPosition)
+            playWhenReady = true
+        }
+    }
+
+    private fun releasePlayer() {
+        player?.let {
+            playbackPosition = it.currentPosition
+            it.release()
+        }
+        player = null
+        binding.playerView.player = null
     }
 
     private fun shareCurrentMedia() {
@@ -105,9 +122,7 @@ class ViewerActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        player?.release()
-        player = null
-        binding.playerView.player = null
+        releasePlayer()
     }
 
     companion object {
