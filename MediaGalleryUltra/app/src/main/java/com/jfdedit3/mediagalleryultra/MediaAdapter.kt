@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.jfdedit3.mediagalleryultra.databinding.ItemMediaBinding
@@ -11,34 +13,38 @@ import com.jfdedit3.mediagalleryultra.databinding.ItemMediaBinding
 class MediaAdapter(
     private val onClick: (MediaItemModel) -> Unit,
     private val onLongClick: (MediaItemModel) -> Unit
-) : RecyclerView.Adapter<MediaAdapter.MediaViewHolder>() {
+) : ListAdapter<MediaItemModel, MediaAdapter.MediaViewHolder>(DIFF) {
 
-    private val items = mutableListOf<MediaItemModel>()
     private val selectedIds = mutableSetOf<Long>()
     private var selectionMode = false
 
-    fun submitList(newItems: List<MediaItemModel>) {
-        items.clear()
-        items.addAll(newItems)
-        notifyDataSetChanged()
+    companion object {
+        val DIFF = object : DiffUtil.ItemCallback<MediaItemModel>() {
+            override fun areItemsTheSame(oldItem: MediaItemModel, newItem: MediaItemModel): Boolean {
+                return oldItem.id == newItem.id
+            }
+
+            override fun areContentsTheSame(oldItem: MediaItemModel, newItem: MediaItemModel): Boolean {
+                return oldItem == newItem
+            }
+        }
     }
 
     fun setSelectionMode(enabled: Boolean) {
         selectionMode = enabled
-        if (!enabled) {
-            selectedIds.clear()
-        }
+        if (!enabled) selectedIds.clear()
         notifyDataSetChanged()
     }
 
     fun toggleSelection(item: MediaItemModel) {
-        if (selectedIds.contains(item.id)) selectedIds.remove(item.id) else selectedIds.add(item.id)
+        if (selectedIds.contains(item.id)) selectedIds.remove(item.id)
+        else selectedIds.add(item.id)
         notifyDataSetChanged()
     }
 
     fun isSelected(item: MediaItemModel): Boolean = selectedIds.contains(item.id)
 
-    fun getSelectedItems(): List<MediaItemModel> = items.filter { selectedIds.contains(it.id) }
+    fun getSelectedItems(): List<MediaItemModel> = currentList.filter { selectedIds.contains(it.id) }
 
     fun getSelectedCount(): Int = selectedIds.size
 
@@ -48,14 +54,13 @@ class MediaAdapter(
     }
 
     override fun onBindViewHolder(holder: MediaViewHolder, position: Int) {
-        holder.bind(items[position])
+        holder.bind(getItem(position))
     }
-
-    override fun getItemCount(): Int = items.size
 
     inner class MediaViewHolder(
         private val binding: ItemMediaBinding
     ) : RecyclerView.ViewHolder(binding.root) {
+
         fun bind(item: MediaItemModel) {
             binding.mediaName.text = item.name
             binding.typeBadge.text = item.type.name
@@ -76,12 +81,8 @@ class MediaAdapter(
             binding.selectionCheck.visibility = if (selected) View.VISIBLE else View.GONE
 
             binding.root.setOnClickListener {
-                if (selectionMode) {
-                    toggleSelection(item)
-                    onClick(item)
-                } else {
-                    onClick(item)
-                }
+                if (selectionMode) toggleSelection(item)
+                onClick(item)
             }
 
             binding.root.setOnLongClickListener {
